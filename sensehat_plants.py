@@ -8,15 +8,12 @@ from datetime import datetime, timezone
 from sense_hat import SenseHat
 from picamera2 import Picamera2
 
-OUTPUT_JSON_PATH = "plant_data.json"
-CAPTURED_IMAGE_PATH = "/home/rancesama/plants/captured_photos/captured_plant.jpg"
-
 
 def get_current_time():
     return datetime.now(timezone.utc).isoformat()
 
-
-def capture_photo(image_path):
+def capture_photo():
+    IMAGE_PATH = "/home/rancesama/plants/captured_photos/captured_plant.jpg"
     picam2 = Picamera2()
 
     # Configure camera for still image capture
@@ -28,11 +25,11 @@ def capture_photo(image_path):
     # Give the camera a short time to adjust exposure/white balance
     time.sleep(2)
 
-    picam2.capture_file(image_path)
+    picam2.capture_file(IMAGE_PATH)
     picam2.stop()
     picam2.close()
 
-    return image_path
+    return IMAGE_PATH
 
 
 def encode_image_to_base64(image_path):
@@ -52,24 +49,26 @@ def encode_image_to_base64(image_path):
         "data": encoded
     }
 
-
-def main():
-    sense = SenseHat()
-
-    captured_image_path = capture_photo(CAPTURED_IMAGE_PATH)
-
+def save_json(image_path):
+    JSON_PATH = "plant_data.json"
     data = {
         "current_time": get_current_time(),
         "temperature": round(sense.get_temperature(), 2),
         "humidity": round(sense.get_humidity(), 2),
-        "image_data": encode_image_to_base64(captured_image_path)
+        "image_path": image_path,
+        "image_data": encode_image_to_base64(image_path)
     }
 
-    with open(OUTPUT_JSON_PATH, "w", encoding="utf-8") as f:
+    with open(JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     print(json.dumps(data, indent=2, ensure_ascii=False))
+    return JSON_PATH
 
 
-if __name__ == "__main__":
-    main()
+def turn_on_fan():
+    os.system("echo 3 | sudo tee /sys/class/thermal/cooling_device0/cur_state")
+
+def turn_off_fan():
+    os.system("echo 0 | sudo tee /sys/class/thermal/cooling_device0/cur_state")    
+
