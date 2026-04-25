@@ -49,7 +49,8 @@ def encode_image_to_base64(image_path):
         "data": encoded
     }
 
-def save_json(image_path):
+def save_json():
+    image_path = capture_photo()
     JSON_PATH = "plant_data.json"
     data = {
         "current_time": get_current_time(),
